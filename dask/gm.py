@@ -106,4 +106,4 @@ if __name__ == '__main__':
 
     start = time.time_ns()
     b = np.sum(np.array(client.gather([client.submit(worker, i, vec_krn, h, alpha) for i in range(len(pts))])), axis=0)
-    print('took {} nanoseconds'.format(time.time_ns() - start))
+    print('took {} seconds'.format((time.time_ns() - start)/1.e9))
