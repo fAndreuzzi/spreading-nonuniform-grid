@@ -1,6 +1,5 @@
 import numpy as np
 
-import dask.array as da
 from dask.distributed import Client
 
 from functools import partial, reduce
@@ -8,14 +7,12 @@ from itertools import product
 from math import ceil, floor, log10
 
 import operator
+import sys
+import time
 
 
 def prod(iterable):
     return reduce(operator.mul, iterable, 1)
-
-
-import sys
-import time
 
 
 def compute_w(epsilon):
@@ -141,3 +138,5 @@ if __name__ == "__main__":
         axis=0,
     )
     print("took {} seconds".format((time.time_ns() - start) / 1.0e9))
+
+    np.save("../data/b.npy", b)
