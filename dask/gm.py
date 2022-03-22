@@ -37,6 +37,9 @@ if __name__ == '__main__':
     f = np.load('../data/function_values.npy')
     assert f.shape[0] == pts.shape[0]
 
+    remote_f = client.scatter(f)
+    remote_pts = client.scatter(pts)
+
     def compute_w(epsilon):
         return ceil(log10(1/epsilon)) + 1
 
@@ -79,7 +82,7 @@ if __name__ == '__main__':
     def solution2(x, h, alpha):
         return np.floor((x + alpha) / h).astype(int)
 
-    def worker(nonuniform_idx, kernel, h, alpha):
+    def worker(nonuniform_idx, pts, f, kernel, h, alpha):
         x = pts[nonuniform_idx]
         c = f[nonuniform_idx]
 
@@ -105,5 +108,5 @@ if __name__ == '__main__':
         return b
 
     start = time.time_ns()
-    b = np.sum(np.array(client.gather([client.submit(worker, i, vec_krn, h, alpha) for i in range(len(pts))])), axis=0)
+    b = np.sum(np.array(client.gather([client.submit(worker, i, remote_pts, remote_f, vec_krn, h, alpha) for i in range(len(pts))])), axis=0)
     print('took {} seconds'.format((time.time_ns() - start)/1.e9))
