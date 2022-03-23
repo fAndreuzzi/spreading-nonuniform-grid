@@ -60,7 +60,7 @@ def solution2(x, h, alpha):
     return np.floor((x + alpha) / h).astype(int)
 
 
-def worker(nonuniform_idx, pts, f, kernel, h, alpha):
+def worker(nonuniform_idx, pts, f, kernel, n, h, alpha):
     x = pts[nonuniform_idx]
     c = f[nonuniform_idx]
 
@@ -129,7 +129,7 @@ if __name__ == "__main__":
             client.gather(
                 [
                     client.submit(
-                        worker, i, remote_pts, remote_f, vec_krn, h, alpha
+                        worker, i, remote_pts, remote_f, vec_krn, n, h, alpha
                     )
                     for i in range(len(pts))
                 ]
