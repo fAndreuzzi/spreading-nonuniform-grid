@@ -5,5 +5,5 @@ Implementation of the spreading algorithms on a plain Dask framework (i.e. no GP
 ## TODO
 
 - [x] GM
-- [ ] GM-Sort
+- [x] GM-Sort
 - [ ] SM
