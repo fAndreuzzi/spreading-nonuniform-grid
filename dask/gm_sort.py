@@ -122,4 +122,4 @@ if __name__ == "__main__":
     )
     print("took {} seconds".format((time.time_ns() - start) / 1.0e9))
 
-    np.save("../data/b.npy", b)
+    np.save("../data/b_gms.npy", b)
