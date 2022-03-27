@@ -51,6 +51,19 @@ def interval_to_slice(start, size):
     )
 
 
+# given two vectors (first and last points for each component)
+# prduces all the possible points whose components are all inside
+# for instance if starts = [1,1] and lasts = [2,3] the points
+# returned are (1,1), (2,1), (1,2), (2,2), (1,3), (2,3)
+def all_combinations(starts, lasts):
+    assert len(starts) == len(lasts)
+    # produce a range from the first and the last values
+    def rng(start, last):
+        return range(start, last + 1)
+
+    return map(np.array, product(*(map(rng, starts, lasts))))
+
+
 def worker(nonuniform_idx, pts, f, kernel, n, h, w, alpha, sub_b, offset):
     x = pts[nonuniform_idx]
     c = f[nonuniform_idx]
@@ -72,9 +85,7 @@ def worker(nonuniform_idx, pts, f, kernel, n, h, w, alpha, sub_b, offset):
                 (h[i] * np.arange(start[i], end[i] + 1) - x[i]) / alpha[i]
             )
 
-    for cmb in product(
-        *[range(start[i], end[i] + 1) for i in range(len(start))]
-    ):
+    for cmb in all_combinations(start, end):
         sub_b[tuple(cmb - offset)] += c * prod(
             krn_vals[i][cmb[i]] for i in range(len(cmb))
         )
