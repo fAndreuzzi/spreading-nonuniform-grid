@@ -110,7 +110,7 @@ if __name__ == "__main__":
     n = fine_grid_size(N, w)
 
     m = np.array([m1, m2])
-    p = m + 2 * np.ceil(w / 2)
+    p = (m + 2 * np.ceil(w / 2)).astype(int)
 
     bin_dims = np.array([m1, m2])
     n_bins_axes = np.ceil(np.divide(n, bin_dims)).astype(int)
