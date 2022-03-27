@@ -26,11 +26,17 @@ from gm import (
 
 # return the modes extremal top left point and bottom right point of the fine
 # grid generated from the given (non-uniform) points.
-def fine_grid_boundaries(pts, h, alpha):
+def fine_grid_boundaries(pts, h, alpha, n):
     s1 = solution1(pts, h, alpha)
     s1[np.where(s1 < 0)] = 0
+    for i in range(len(n)):
+        s1[np.where(s1 > n[i])] = n[i]
+
     s2 = solution2(pts, h, alpha)
     s2[np.where(s2 < 0)] = 0
+    for i in range(len(n)):
+        s2[np.where(s1 > n[i])] = n[i]
+
     return np.min(s1, axis=0), np.max(s2, axis=0)
 
 
@@ -137,7 +143,7 @@ if __name__ == "__main__":
 
     futures = []
     for bn in bins:
-        top_left, bottom_right = fine_grid_boundaries(pts[bn], h, alpha)
+        top_left, bottom_right = fine_grid_boundaries(pts[bn], h, alpha, n)
         # shape of sub_b (called "padded" in the paper)
         sub_b_shape = shape_from_boundaries(top_left, bottom_right)
         # offset for the translation from sub_b to the full b
