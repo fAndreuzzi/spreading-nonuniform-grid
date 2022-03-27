@@ -28,7 +28,9 @@ from gm import (
 # grid generated from the given (non-uniform) points.
 def fine_grid_boundaries(pts, h, alpha):
     s1 = solution1(pts, h, alpha)
+    s1[np.where(s1 < 0)] = 0
     s2 = solution2(pts, h, alpha)
+    s2[np.where(s2 < 0)] = 0
     return np.min(s1, axis=0), np.max(s2, axis=0)
 
 
