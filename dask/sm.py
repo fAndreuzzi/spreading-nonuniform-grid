@@ -182,9 +182,9 @@ if __name__ == "__main__":
             )
 
     # merge all the sub-sums into b
-    b = da.from_array(np.zeros(n, dtype=float))
+    b = np.zeros(n, dtype=float)
     for sub_b, offset in client.gather(futures):
-        b[interval_to_slice(offset, sub_b.shape)] += sub_b
+        b[interval_to_slice(offset, sub_b.shape)] += sub_b.compute()
 
     print("took {} seconds".format((time.time_ns() - start) / 1.0e9))
 
