@@ -29,13 +29,12 @@ def kernel(z, beta):
 
 def fine_grid_size(nonuniform_grid_size, w, upsampling_factor=2):
     # TODO fix
-    sz = np.ceil(
+    return np.ceil(
         np.maximum(
             upsampling_factor * nonuniform_grid_size,
             2 * w * np.ones_like(nonuniform_grid_size),
         )
-    )
-    return sz.astype(int)
+    ).astype(int)
 
 
 def fine_grid_spacing(n):
@@ -110,9 +109,6 @@ if __name__ == "__main__":
     f = np.load("../data/function_values.npy")
     assert f.shape[0] == pts.shape[0]
 
-    remote_f = client.scatter(f)
-    remote_pts = client.scatter(pts)
-
     beta = compute_beta(epsilon)
     w = compute_w(epsilon)
     prt_kernel = partial(kernel, beta=beta)
@@ -129,7 +125,7 @@ if __name__ == "__main__":
             client.gather(
                 [
                     client.submit(
-                        worker, i, remote_pts, remote_f, vec_krn, n, h, alpha
+                        worker, i, pts, f, vec_krn, n, h, alpha
                     )
                     for i in range(len(pts))
                 ]

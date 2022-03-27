@@ -105,9 +105,6 @@ if __name__ == "__main__":
 
     t = find_optimal_permutation(nbins, pts, h, n_bins_axes, bin_dims)
 
-    remote_f = client.scatter(f)
-    remote_pts = client.scatter(pts)
-
     start = time.time_ns()
     # workers are spawned according to the new order
     b = np.sum(
@@ -115,7 +112,7 @@ if __name__ == "__main__":
             client.gather(
                 [
                     client.submit(
-                        worker, j, remote_pts, remote_f, vec_krn, n, h, alpha
+                        worker, j, pts, f, vec_krn, n, h, alpha
                     )
                     for j in t
                 ]

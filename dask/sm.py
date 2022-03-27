@@ -35,20 +35,25 @@ def fine_grid_boundaries(pts, h, alpha, n):
     s2 = solution2(pts, h, alpha)
     s2[np.where(s2 < 0)] = 0
     for i in range(len(n)):
-        s2[np.where(s1 > n[i])] = n[i]
+        s2[np.where(s2 > n[i])] = n[i]
 
     return np.min(s1, axis=0), np.max(s2, axis=0)
 
 
 def shape_from_boundaries(top_left, bottom_right):
-    return tuple(bottom_right - top_left)
+    incr = lambda x: x + 1
+    return tuple(map(incr, tuple(bottom_right - top_left)))
+
+
+def interval_to_slice(start, size):
+    return tuple(
+        slice(start[i], start[i] + size[i], 1) for i in range(len(start))
+    )
 
 
 def worker(nonuniform_idx, pts, f, kernel, n, h, w, alpha, sub_b, offset):
     x = pts[nonuniform_idx]
     c = f[nonuniform_idx]
-
-    b = np.zeros(p, dtype=float)
 
     start = solution1(x, h, alpha)
     start[start < 0] = 0
@@ -70,11 +75,11 @@ def worker(nonuniform_idx, pts, f, kernel, n, h, w, alpha, sub_b, offset):
     for cmb in product(
         *[range(start[i], end[i] + 1) for i in range(len(start))]
     ):
-        b[cmb[0] - offset[0], cmb[1] - offset[1]] += c * prod(
+        sub_b[tuple(cmb - offset)] += c * prod(
             krn_vals[i][cmb[i]] for i in range(len(cmb))
         )
 
-    return b, offset
+    return sub_b, offset
 
 
 if __name__ == "__main__":
@@ -136,9 +141,6 @@ if __name__ == "__main__":
     # flatten list
     bins = reduce(operator.iconcat, bins, [])
 
-    remote_f = client.scatter(f)
-    remote_pts = client.scatter(pts)
-
     start = time.time_ns()
 
     futures = []
@@ -150,21 +152,20 @@ if __name__ == "__main__":
         sub_b_offset = tuple(top_left)
 
         sub_b = da.from_array(np.zeros(sub_b_shape, dtype=float))
-        remote_sub_b = client.scatter(sub_b)
 
         for j in bn:
             futures.append(
                 client.submit(
                     worker,
                     j,
-                    pts=remote_pts,
-                    f=remote_f,
+                    pts=pts,
+                    f=f,
                     kernel=vec_krn,
                     n=n,
                     h=h,
                     w=w,
                     alpha=alpha,
-                    sub_b=remote_sub_b,
+                    sub_b=sub_b,
                     offset=sub_b_offset,
                 )
             )
@@ -172,10 +173,7 @@ if __name__ == "__main__":
     # merge all the sub-sums into b
     b = np.zeros(n, dtype=float)
     for sub_b, offset in client.gather(futures):
-        b[
-            offset[0] : offset[0] + sub_b.shape[0],
-            offset[1] : offset[1] + sub_b.shape[1],
-        ] += sub_b
+        b[interval_to_slice(offset, sub_b.shape)] += sub_b
 
     print("took {} seconds".format((time.time_ns() - start) / 1.0e9))
 
