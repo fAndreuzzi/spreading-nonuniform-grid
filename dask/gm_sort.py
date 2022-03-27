@@ -20,7 +20,8 @@ from gm import (
     fine_grid_spacing,
     solution1,
     solution2,
-    worker
+    worker,
+    load_data
 )
 
 # h is the uniform spacing
@@ -83,10 +84,8 @@ if __name__ == "__main__":
 
     client = Client(processes=True, n_workers=n_workers)
 
-    pts = np.load("../data/points.npy")
-    N = np.array([len(np.unique(pts[:, i])) for i in range(pts.shape[1])])
-    f = np.load("../data/function_values.npy")
-    assert f.shape[0] == pts.shape[0]
+    pts, f = load_data()
+    N = nonuniform_grid_size(pts)
 
     beta = compute_beta(epsilon)
     w = compute_w(epsilon)

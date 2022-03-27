@@ -11,6 +11,29 @@ import sys
 import time
 
 
+def matrix_to_valuelist(mat):
+    return mat.flatten(order="c")
+
+
+def axes_to_list(x, y):
+    return np.vstack(
+        [np.vstack([np.array([xi, yi])[None, :] for yi in y]) for xi in x]
+    )
+
+
+def load_data():
+    x = np.load("../data/x.npy")
+    y = np.load("../data/y.npy")
+    f = np.load("../data/f.npy")
+
+    pts = axes_to_list(x, y)
+    f = matrix_to_valuelist(f)
+
+    assert f.shape[0] == pts.shape[0]
+
+    return pts, f
+
+
 def prod(iterable):
     return reduce(operator.mul, iterable, 1)
 
@@ -25,6 +48,10 @@ def compute_beta(epsilon):
 
 def kernel(z, beta):
     return np.exp(beta * (np.sqrt(1 - z * z) - 1))
+
+
+def nonuniform_grid_size(pts):
+    return np.array([len(np.unique(pts[:, i])) for i in range(pts.shape[1])])
 
 
 def fine_grid_size(nonuniform_grid_size, w, upsampling_factor=2):
@@ -104,10 +131,8 @@ if __name__ == "__main__":
 
     client = Client(processes=True, n_workers=n_workers)
 
-    pts = np.load("../data/points.npy")
-    N = np.array([len(np.unique(pts[:, i])) for i in range(pts.shape[1])])
-    f = np.load("../data/function_values.npy")
-    assert f.shape[0] == pts.shape[0]
+    pts, f = load_data()
+    N = nonuniform_grid_size(pts)
 
     beta = compute_beta(epsilon)
     w = compute_w(epsilon)
@@ -124,9 +149,7 @@ if __name__ == "__main__":
         np.array(
             client.gather(
                 [
-                    client.submit(
-                        worker, i, pts, f, vec_krn, n, h, alpha
-                    )
+                    client.submit(worker, i, pts, f, vec_krn, n, h, alpha)
                     for i in range(len(pts))
                 ]
             )
