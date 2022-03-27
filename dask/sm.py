@@ -162,7 +162,7 @@ if __name__ == "__main__":
             )
 
     # merge all the sub-sums into b
-    b = n.zeros(n, dtype=float)
+    b = np.zeros(n, dtype=float)
     for sub_b, offset in client.gather(futures):
         b[
             offset[0] : offset[0] + sub_b.shape[0],
