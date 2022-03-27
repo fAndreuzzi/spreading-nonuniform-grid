@@ -33,7 +33,7 @@ def fine_grid_boundaries(pts, h, alpha):
 
 
 def shape_from_boundaries(top_left, bottom_right):
-    return tuple(top_left - bottom_right)
+    return tuple(bottom_right - top_left)
 
 
 def worker(nonuniform_idx, pts, f, kernel, n, h, w, alpha, sub_b, offset):
