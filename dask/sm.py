@@ -182,7 +182,7 @@ if __name__ == "__main__":
             )
 
     # merge all the sub-sums into b
-    b = np.zeros(n, dtype=float)
+    b = da.from_array(np.zeros(n, dtype=float))
     for sub_b, offset in client.gather(futures):
         b[interval_to_slice(offset, sub_b.shape)] += sub_b
 
