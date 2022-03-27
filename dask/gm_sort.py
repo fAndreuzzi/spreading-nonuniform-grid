@@ -42,17 +42,20 @@ def bin_index(nbins_per_direction, bin_coords):
         ]
     )
 
+def find_bins(nbins, pts, h, nbin_axes, bin_dims):
+    bins = [[] for _ in range(nbins)]
+    for j,pt in enumerate(pts):
+        uf_coords = nonuniform_coord_to_uniform(pts, j, h)
+        bin_coords = which_bin(uf_coords, bin_dims)
+        bins[bin_index(nbin_axes, bin_coords)].append(j)
+    return bins
 
 # find a permutation of the points (represented by a
 # list of integers which can be used to re-arrange
 # a NumPy array) such that t(1),...,t(M1) belong to R1,
 # t(M1+1),...,t(M2) belong to R2 and so on
 def find_optimal_permutation(nbins, pts, h, nbin_axes, bin_dims):
-    bins = [[] for _ in range(nbins)]
-    for j,pt in enumerate(pts):
-        uf_coords = nonuniform_coord_to_uniform(pts, j, h)
-        bin_coords = which_bin(uf_coords, bin_dims)
-        bins[bin_index(nbin_axes, bin_coords)].append(j)
+    bins = find_bins(nbins, pts, h, nbin_axes, bin_dims)
     # flatten list
     return reduce(operator.iconcat, bins, [])
 
