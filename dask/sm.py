@@ -36,9 +36,7 @@ def shape_from_boundaries(top_left, bottom_right):
     return tuple(top_left - bottom_right)
 
 
-def worker(
-    nonuniform_idx, pts, f, kernel, n, h, w, alpha, sub_b, offset
-):
+def worker(nonuniform_idx, pts, f, kernel, n, h, w, alpha, sub_b, offset):
     x = pts[nonuniform_idx]
     c = f[nonuniform_idx]
 
@@ -64,9 +62,9 @@ def worker(
     for cmb in product(
         *[range(start[i], end[i] + 1) for i in range(len(start))]
     ):
-        b[
-            cmb[0] - offset[0], cmb[1] - offset[1]
-        ] += c * prod(krn_vals[i][cmb[i]] for i in range(len(cmb)))
+        b[cmb[0] - offset[0], cmb[1] - offset[1]] += c * prod(
+            krn_vals[i][cmb[i]] for i in range(len(cmb))
+        )
 
     return b, offset
 
@@ -122,8 +120,13 @@ if __name__ == "__main__":
 
     alpha = compute_alpha(w, n)
 
-    bins = find_bins(nbins, pts, h, n_bins_axes, bin_dims)
-    bins = map(lambda arr: np.split(arr, msub), map(np.array, bins))
+    coarse_bins = find_bins(nbins, pts, h, n_bins_axes, bin_dims)
+    # impose msub maximum size for subproblems
+    bins = list(
+        map(lambda arr: np.split(arr, msub), map(np.array, coarse_bins))
+    )
+    # flatten list
+    bins = reduce(operator.iconcat, bins, [])
 
     remote_f = client.scatter(f)
     remote_pts = client.scatter(pts)
