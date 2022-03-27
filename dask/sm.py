@@ -155,7 +155,6 @@ if __name__ == "__main__":
                     n=n,
                     h=h,
                     w=w,
-                    m=[m1, m2],
                     alpha=alpha,
                     sub_b=remote_sub_b,
                     offset=sub_b_offset,
