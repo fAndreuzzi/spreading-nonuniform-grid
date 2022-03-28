@@ -97,8 +97,6 @@ def worker(nonuniform_idx, pts, f, kernel, n, h, alpha):
     end = solution2(x, h, alpha)
     end[end > n - 1] = n[end > n - 1] - 1
 
-    krn_transformation = lambda l: np.multiply(l, h) - x
-
     # kernel evaluated in the uniform grid (translated with the
     # non-uniform coordinates)
     krn_vals = np.zeros((len(n), np.max(n)), dtype=float)
@@ -112,7 +110,7 @@ def worker(nonuniform_idx, pts, f, kernel, n, h, alpha):
         *[range(start[i], end[i] + 1) for i in range(len(start))]
     ):
         b[cmb[0], cmb[1]] += c * prod(
-            krn_vals[i][cmb[i]] for i in range(len(cmb))
+            krn_vals[i, cmb[i]] for i in range(len(cmb))
         )
 
     return b

@@ -22,7 +22,7 @@ from gm import (
     fine_grid_spacing,
     solution1,
     solution2,
-    load_data
+    load_data,
 )
 
 # return the modes extremal top left point and bottom right point of the fine
@@ -74,8 +74,6 @@ def worker(nonuniform_idx, pts, f, kernel, n, h, w, alpha, sub_b, offset):
     end = solution2(x, h, alpha)
     end[end > n - 1] = n[end > n - 1] - 1
 
-    krn_transformation = lambda l: np.multiply(l, h) - x
-
     # kernel evaluated in the uniform grid (translated with the
     # non-uniform coordinates).
     # the translation occurs here
@@ -88,7 +86,7 @@ def worker(nonuniform_idx, pts, f, kernel, n, h, w, alpha, sub_b, offset):
 
     for cmb in all_combinations(start, end):
         sub_b[tuple(cmb - offset)] += c * prod(
-            krn_vals[i][cmb[i]] for i in range(len(cmb))
+            krn_vals[i, cmb[i]] for i in range(len(cmb))
         )
 
     return sub_b, offset
