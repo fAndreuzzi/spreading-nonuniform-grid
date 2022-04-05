@@ -182,7 +182,7 @@ def mapped_distance_matrix(
         pts2,
         inclusion_matrix,
         max_distance,
-        lambda x: x * x,
+        func
     )
     assert mapped_distance.shape == (pts1.shape[0], pts2.shape[0])
 
