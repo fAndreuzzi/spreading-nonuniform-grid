@@ -30,9 +30,8 @@ def bounds(bn):
 # return a tensor of shape N x 2 x D where N is the number of bins, 2 is the
 # number of bounds (top-left and bottom-right) and D is the dimensionality of
 # the space
-def compute_bins_bounds(bins):
+def compute_bins_bounds(bins, ndims):
     nbins = len(bins)
-    ndims = len(bins[0][0])
     bin_bounds = np.zeros((nbins, 2, ndims), dtype=float)
     for bin_idx in range(nbins):
         bin_as_arr = np.array(bins[bin_idx])
@@ -120,10 +119,12 @@ def compute_mapped_distance_matrix(
     bins, indexes_inside_bins, pts1, pts2, inclusion_matrix, max_distance, func
 ):
     func = np.vectorize(func)
+
+    def filter_empty_bins(bin_idx):
+        return len(bins[bin_idx]) > 0 and np.any(inclusion_matrix[:, bin_idx])
+
     # we filter away empty bins
-    bins_indexes = filter(
-        lambda idx: len(bins) > 0, range(inclusion_matrix.shape[1])
-    )
+    bins_indexes = filter(filter_empty_bins, range(inclusion_matrix.shape[1]))
     matrix = np.zeros((pts1.shape[0], pts2.shape[0]), dtype=float)
 
     for bin_idx in bins_indexes:
@@ -140,7 +141,10 @@ def compute_mapped_distance_matrix(
         # a new layer of selection, may want to disable to improve performance
         nearby = distances < max_distance  # (1)
 
-        for pt1_idx in range(bin_pts1.shape[0]):
+        def filter_zero_nearby(pt1_idx):
+            return np.any(nearby[pt1_idx])
+
+        for pt1_idx in filter(filter_zero_nearby, range(bin_pts1.shape[0])):
             idx = indexes[pt1_idx]
             matrix[idx, bin_pts2_indexing_to_full[nearby[pt1_idx]]] = func(
                 distances[pt1_idx, nearby[pt1_idx]]
@@ -162,8 +166,10 @@ def mapped_distance_matrix(
     if bin_dims.dtype != int:
         raise ValueError("The number of points in each bin must be an integer")
 
+    ndims = pts1.shape[1]
+
     bins, indexes_inside_bins = fill_bins(pts1, h, bin_dims, region_dimension)
-    bins_bounds = compute_bins_bounds(bins)
+    bins_bounds = compute_bins_bounds(bins, ndims)
     padded_bin_bounds = compute_padded_bin_bounds(bins_bounds, max_distance)
 
     assert padded_bin_bounds.shape == bins_bounds.shape
