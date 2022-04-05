@@ -140,8 +140,21 @@ def compute_mapped_distance_matrix(
     return matrix
 
 
-def mapped_distance_matrix(pts1, pts2, max_distance, func):
-    bins, indexes_inside_bins = fill_bins(pts, h, bin_dims, uniform_points)
+def mapped_distance_matrix(
+    pts1, pts2, max_distance, func, h=None, bin_dims=None
+):
+    region_dimension = np.max(pts2, axis=0) - np.min(pts2, axis=0)
+
+    if not h:
+        # 1000 points in each direction
+        h = region_dimension / 1000
+    if not bin_dims:
+        bin_dims = np.full(region_dimension.shape, 100)
+
+    if bin_dims.dtype != int:
+        raise ValueError("The number of points in each bin must be an integer")
+
+    bins, indexes_inside_bins = fill_bins(pts1, h, bin_dims, region_dimension)
     bins_bounds = compute_bins_bounds(bins)
     padded_bin_bounds = compute_padded_bin_bounds(bins_bounds, max_distance)
 
