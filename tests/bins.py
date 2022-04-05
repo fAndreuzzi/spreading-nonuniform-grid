@@ -127,33 +127,23 @@ def compute_mapped_distance_matrix(
     return matrix
 
 
-bin_dims = np.array([20, 20])
-h = np.array([0.001, 0.001])
-distance = 0.05
+def mapped_distance_matrix(pts1, pts2, max_distance, func):
+    bins, indexes_inside_bins = fill_bins(pts, h, bin_dims, uniform_points)
+    bins_bounds = compute_bins_bounds(bins)
+    padded_bin_bounds = compute_padded_bin_bounds(bins_bounds, max_distance)
 
-pts = np.random.rand(10000, 2)
+    assert padded_bin_bounds.shape == bins_bounds.shape
 
-ux = np.arange(1001) * h[0]
-uy = np.arange(1001) * h[1]
-uniform_points = np.reshape(np.meshgrid(ux, uy), (2, -1)).T
+    inclusion_matrix = match_points_and_bins(padded_bin_bounds, uniform_points)
+    mapped_distance = compute_mapped_distance_matrix(
+        bins,
+        indexes_inside_bins,
+        pts,
+        uniform_points,
+        inclusion_matrix,
+        max_distance,
+        lambda x: x * x,
+    )
+    assert mapped_distance.shape == (pts.shape[0], uniform_points.shape[0])
 
-bins, indexes_inside_bins = fill_bins(pts, h, bin_dims, uniform_points)
-bins_bounds = compute_bins_bounds(bins)
-padded_bin_bounds = compute_padded_bin_bounds(bins_bounds, distance)
-
-assert padded_bin_bounds.shape == bins_bounds.shape
-
-inclusion_matrix = match_points_and_bins(padded_bin_bounds, uniform_points)
-mapped_distance = compute_mapped_distance_matrix(
-    bins,
-    indexes_inside_bins,
-    pts,
-    uniform_points,
-    inclusion_matrix,
-    0.15,
-    lambda x: x * x,
-)
-
-plt.figure(figsize=(20, 10))
-plt.pcolormesh(mapped_distance)
-plt.show()
+    return mapped_distance
