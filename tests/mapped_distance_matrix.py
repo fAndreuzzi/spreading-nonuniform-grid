@@ -32,7 +32,8 @@ def bounds(bn):
 # the space
 def compute_bins_bounds(bins):
     nbins = len(bins)
-    bin_bounds = np.zeros((nbins, 2, pts.shape[1]), dtype=float)
+    ndims = len(bins[0][0])
+    bin_bounds = np.zeros((nbins, 2, ndims), dtype=float)
     for bin_idx in range(nbins):
         bin_as_arr = np.array(bins[bin_idx])
         bins[bin_idx] = bin_as_arr
@@ -53,14 +54,23 @@ def compute_bins_bounds(bins):
 # direction.
 def fill_bins(pts, h, bin_dims, region_dimension):
     bins_per_axis = np.ceil((region_dimension / h / bin_dims)).astype(int)
+    print(bins_per_axis)
     nbins = np.prod(bins_per_axis)
 
     bins = [[] for _ in range(nbins)]
     indexes_inside_bins = [[] for _ in range(nbins)]
     # rounded uniform coordinates for each non-uniform point
     uf_coords = rounded_uniform_coordinates(pts, h)
+    print(uf_coords)
     # coordinates of the bin for a given non-uniform point
     bn_coords = bin_coords(uf_coords, bin_dims)
+
+    # moves to the last bin of the axis any point which is outside the region
+    # defined by pts2.
+    for axis_idx in range(bn_coords.shape[1]):
+        bn_coords[bn_coords[:, axis_idx] >= bins_per_axis[axis_idx]] = (
+            bins_per_axis[axis_idx] - 1
+        )
 
     # maps bin coords to a linear array
     linear_bn_map = linearized_bin_coords(bins_per_axis)
@@ -144,12 +154,15 @@ def mapped_distance_matrix(
     pts1, pts2, max_distance, func, h=None, bin_dims=None
 ):
     region_dimension = np.max(pts2, axis=0) - np.min(pts2, axis=0)
+    print(region_dimension)
 
     if not h:
         # 1000 points in each direction
         h = region_dimension / 1000
     if not bin_dims:
         bin_dims = np.full(region_dimension.shape, 100)
+    print(h)
+    print(bin_dims)
 
     if bin_dims.dtype != int:
         raise ValueError("The number of points in each bin must be an integer")
@@ -160,16 +173,32 @@ def mapped_distance_matrix(
 
     assert padded_bin_bounds.shape == bins_bounds.shape
 
-    inclusion_matrix = match_points_and_bins(padded_bin_bounds, uniform_points)
+    inclusion_matrix = match_points_and_bins(padded_bin_bounds, pts2)
     mapped_distance = compute_mapped_distance_matrix(
         bins,
         indexes_inside_bins,
-        pts,
-        uniform_points,
+        pts1,
+        pts2,
         inclusion_matrix,
         max_distance,
         lambda x: x * x,
     )
-    assert mapped_distance.shape == (pts.shape[0], uniform_points.shape[0])
+    assert mapped_distance.shape == (pts1.shape[0], pts2.shape[0])
 
     return mapped_distance
+
+
+t = np.linspace(0, 2, 256)
+rng = np.random.default_rng(seed=2)
+x, y = np.meshgrid(t, t)
+samples1 = np.stack((x.flatten(), y.flatten()), axis=-1)
+samples2 = np.stack((2 * rng.random(size=4), 2 * rng.random(size=4)), axis=-1)
+alpha = np.ones(samples2.shape[0])
+sigma = 1 / 12
+func = lambda x: np.exp(-(x ** 2) / (2 * sigma ** 2))
+
+samples2 = np.reshape(
+    np.meshgrid(np.linspace(0, 2, 100), np.linspace(0, 2, 100)), (2, -1)
+).T
+
+mapped_distance_matrix(samples1, samples2, 0.1, func)
