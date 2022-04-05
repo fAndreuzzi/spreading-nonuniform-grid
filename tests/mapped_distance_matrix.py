@@ -41,9 +41,18 @@ def compute_bins_bounds(bins):
     return bin_bounds
 
 
-def fill_bins(pts, h, bin_dims, uniform_points):
-    L = np.max(uniform_points, axis=0) - np.min(uniform_points, axis=0)
-    bins_per_axis = np.ceil((L / h / bin_dims)).astype(int)
+# build a list of lists, where each list contains the points in pts contained
+# inside the bin corresponding to a certain (linearized) coordinate. For more on
+# linearized bin coordinates see bin_coords and linearized_bin_coords.
+# pts is the matrix of points.
+# h is the granularity of the uniform grid we intend to build.
+# bin_dims is the number of uniform points to be included in each (non-padded)
+#   bin, in each direction.
+# region_dimension is the dimension of the region used to enclose the points.
+# it is preferable that bin_dims * h divides region_dimension exactly in each
+# direction.
+def fill_bins(pts, h, bin_dims, region_dimension):
+    bins_per_axis = np.ceil((region_dimension / h / bin_dims)).astype(int)
     nbins = np.prod(bins_per_axis)
 
     bins = [[] for _ in range(nbins)]
@@ -78,6 +87,8 @@ def compute_padded_bin_bounds(boundaries, distance):
     return np.concatenate([top_left[:, None], bottom_right[:, None]], axis=1)
 
 
+# given a set of bins bounds and a set of points, find which points are inside
+# which bins (a point could belong to multiple bins)
 def match_points_and_bins(bins_bounds, points):
     # this has one row for each pt in points, and one column for each bin.
     # True if the point in a given row belongs to the bin in a given column.
@@ -101,11 +112,13 @@ def compute_mapped_distance_matrix(
     bins, indexes_inside_bins, pts1, pts2, inclusion_matrix, max_distance, func
 ):
     func = np.vectorize(func)
-
-    matrix = np.zeros((pts1.shape[0], pts2.shape[0]), dtype=float)
-    for bin_idx in filter(
+    # we filter away empty bins
+    bins_indexes = filter(
         lambda idx: len(bins) > 0, range(inclusion_matrix.shape[1])
-    ):
+    )
+    matrix = np.zeros((pts1.shape[0], pts2.shape[0]), dtype=float)
+
+    for bin_idx in bins_indexes:
         bin_pts1 = bins[bin_idx]
 
         pts2_in_bin = inclusion_matrix[:, bin_idx]
