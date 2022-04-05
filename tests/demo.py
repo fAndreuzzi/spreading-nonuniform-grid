@@ -35,5 +35,6 @@ for idx, uxi in enumerate(upts):
 
 plt.subplot(1,2,2)
 plt.pcolormesh(m)
+plt.colorbar()
 
 plt.show()
