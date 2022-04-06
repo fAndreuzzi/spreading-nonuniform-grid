@@ -49,7 +49,6 @@ def compute_bins_bounds(bins, ndims):
 # region_dimension is the dimension of the region used to enclose the points.
 # it is preferable that bin_dims * h divides region_dimension exactly in each
 # direction.
-@profile
 def fill_bins(pts, h, bin_dims, region_dimension):
     bins_per_axis = np.ceil((region_dimension / h / bin_dims)).astype(int)
     nbins = np.prod(bins_per_axis)
@@ -68,17 +67,20 @@ def fill_bins(pts, h, bin_dims, region_dimension):
             bins_per_axis[axis_idx] - 1
         )
 
-    # maps bin coords to a linear array
-    linearized_bin_coords = np.arange(nbins).reshape(bins_per_axis, order="C")
     # for each non-uniform point, gives the linearized coordinate of the
     # appropriate bin
-    linearized_bn_coords = np.apply_along_axis(
-        lambda row: linearized_bin_coords[tuple(row)], axis=1, arr=bn_coords
-    )
+    shifted_nbins_per_axis = np.ones_like(bins_per_axis)
+    shifted_nbins_per_axis[:-1] = bins_per_axis[1:]
+    linearized_bin_coords = np.sum(bn_coords * shifted_nbins_per_axis, axis=1)
+    # the above is much more efficient than this:
+    # lbc = np.arange(nbins).reshape(bins_per_axis, order="C")
+    # linearized_bin_coords = np.apply_along_axis(
+    #     lambda row: lbc[tuple(row)], axis=1, arr=bn_coords
+    # )
 
     # put each non-uniform point into the appopriate bin
     for j in range(len(pts)):
-        linear_bin_coord = linearized_bn_coords[j]
+        linear_bin_coord = linearized_bin_coords[j]
         bins[linear_bin_coord].append(pts[j])
         indexes_inside_bins[linear_bin_coord].append(j)
 
