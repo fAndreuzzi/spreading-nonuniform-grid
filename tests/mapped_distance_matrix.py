@@ -37,7 +37,7 @@ def compute_bins_bounds(bins, ndims):
         bins[bin_idx] = bin_as_arr
 
         # we don't do anything if the bin is empty
-        if bin_as_arr.shape[0] > 0:
+        if len(bin_as_arr) > 0:
             top_left, bottom_right = bounds(bin_as_arr)
             bin_bounds[bin_idx, 0] = top_left
             bin_bounds[bin_idx, 1] = bottom_right
@@ -81,7 +81,7 @@ def fill_bins(pts, h, bin_dims, region_dimension):
     )
 
     # put each non-uniform point into the appopriate bin
-    for j in range(pts.shape[0]):
+    for j in range(len(pts)):
         linear_bin_coord = linearized_bn_coords[j]
         bins[linear_bin_coord].append(pts[j])
         indexes_inside_bins[linear_bin_coord].append(j)
@@ -102,7 +102,7 @@ def compute_padded_bin_bounds(boundaries, distance):
 def match_points_and_bins(bins_bounds, points):
     # this has one row for each pt in points, and one column for each bin.
     # True if the point in a given row belongs to the bin in a given column.
-    inclusion_matrix = np.full((points.shape[0], bins_bounds.shape[0]), False)
+    inclusion_matrix = np.full((len(points), len(bins_bounds)), False)
     # we now need to check which uniform points are in which padded bin
     for bin_idx, bin_bounds in enumerate(bins_bounds):
         inside_bin = np.logical_and(
@@ -128,7 +128,7 @@ def compute_mapped_distance_matrix(
 
     # we filter away empty bins
     bins_indexes = filter(filter_empty_bins, range(inclusion_matrix.shape[1]))
-    matrix = np.zeros((pts1.shape[0], pts2.shape[0]), dtype=float)
+    matrix = np.zeros((len(pts1), len(pts2)), dtype=float)
 
     for bin_idx in bins_indexes:
         bin_pts1 = bins[bin_idx]
@@ -136,7 +136,7 @@ def compute_mapped_distance_matrix(
         pts2_in_bin = inclusion_matrix[:, bin_idx]
         padded_bin_pts2 = pts2[pts2_in_bin]
         # not needed if (1) is disabled
-        bin_pts2_indexing_to_full = np.arange(pts2.shape[0])[pts2_in_bin]
+        bin_pts2_indexing_to_full = np.arange(len(pts2))[pts2_in_bin]
 
         distances = compute_distance(bin_pts1, padded_bin_pts2)
 
@@ -147,7 +147,7 @@ def compute_mapped_distance_matrix(
         def filter_zero_nearby(pt1_idx):
             return np.any(nearby[pt1_idx])
 
-        for pt1_idx in filter(filter_zero_nearby, range(bin_pts1.shape[0])):
+        for pt1_idx in filter(filter_zero_nearby, range(len(bin_pts1))):
             idx = indexes[pt1_idx]
             matrix[idx, bin_pts2_indexing_to_full[nearby[pt1_idx]]] = func(
                 distances[pt1_idx, nearby[pt1_idx]]
@@ -187,6 +187,6 @@ def mapped_distance_matrix(
         max_distance,
         func,
     )
-    assert mapped_distance.shape == (pts1.shape[0], pts2.shape[0])
+    assert mapped_distance.shape == (len(pts1), len(pts2))
 
     return mapped_distance
