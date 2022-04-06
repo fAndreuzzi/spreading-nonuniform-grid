@@ -75,11 +75,6 @@ def fill_bins(pts, h, bin_dims, region_dimension):
     shifted_nbins_per_axis = np.ones_like(bins_per_axis)
     shifted_nbins_per_axis[:-1] = bins_per_axis[1:]
     linearized_bin_coords = np.sum(bin_coords * shifted_nbins_per_axis, axis=1)
-    # the above is much more efficient than this:
-    # lbc = np.arange(nbins).reshape(bins_per_axis, order="C")
-    # linearized_bin_coords = np.apply_along_axis(
-    #     lambda row: lbc[tuple(row)], axis=1, arr=bin_coords
-    # )
 
     # add a second column containing the index in pts1
     linearized_bin_coords = np.hstack(
