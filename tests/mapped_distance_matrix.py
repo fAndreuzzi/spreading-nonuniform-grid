@@ -25,18 +25,17 @@ def bounds(bin_pts):
 # the space
 def compute_bins_bounds(bins, ndims):
     nbins = len(bins)
+    numpy_bins = list(map(np.array, bins))
+
     bin_bounds = np.zeros((nbins, 2, ndims), dtype=float)
     for bin_idx in range(nbins):
-        # until now the bin is a Python list. we want it to be a NumPy array
-        bin_as_arr = np.array(bins[bin_idx])
-        bins[bin_idx] = bin_as_arr
-
+        b = numpy_bins[bin_idx]
         # we don't do anything if the bin is empty
-        if len(bin_as_arr) > 0:
-            top_left, bottom_right = bounds(bin_as_arr)
+        if len(b) > 0:
+            top_left, bottom_right = bounds(b)
             bin_bounds[bin_idx, 0] = top_left
             bin_bounds[bin_idx, 1] = bottom_right
-    return bin_bounds
+    return numpy_bins, bin_bounds
 
 
 # build a list of lists, where each list contains the points in pts contained
@@ -178,7 +177,7 @@ def mapped_distance_matrix(
     ndims = pts1.shape[1]
 
     bins, indexes_inside_bins = fill_bins(pts1, h, bin_dims, region_dimension)
-    bins_bounds = compute_bins_bounds(bins, ndims)
+    bins, bins_bounds = compute_bins_bounds(bins, ndims)
     padded_bin_bounds = compute_padded_bin_bounds(bins_bounds, max_distance)
 
     assert padded_bin_bounds.shape == bins_bounds.shape
