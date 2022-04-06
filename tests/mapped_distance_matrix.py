@@ -1,5 +1,4 @@
 import numpy as np
-from math import prod
 import matplotlib.pyplot as plt
 
 # approximated uniform coordinates of non-uniform points
@@ -14,10 +13,6 @@ def rounded_uniform_coordinates(pts, h):
 # placed
 def bin_coords(rounded_uniform_coords, bin_dims):
     return rounded_uniform_coords // bin_dims
-
-
-def linearized_bin_coords(nbins):
-    return np.arange(prod(nbins)).reshape((nbins), order="C")
 
 
 # top-left and bottom-right
@@ -54,6 +49,7 @@ def compute_bins_bounds(bins, ndims):
 # region_dimension is the dimension of the region used to enclose the points.
 # it is preferable that bin_dims * h divides region_dimension exactly in each
 # direction.
+@profile
 def fill_bins(pts, h, bin_dims, region_dimension):
     bins_per_axis = np.ceil((region_dimension / h / bin_dims)).astype(int)
     nbins = np.prod(bins_per_axis)
@@ -73,11 +69,11 @@ def fill_bins(pts, h, bin_dims, region_dimension):
         )
 
     # maps bin coords to a linear array
-    linear_bn_map = linearized_bin_coords(bins_per_axis)
+    linearized_bin_coords = np.arange(nbins).reshape(bins_per_axis, order="C")
     # for each non-uniform point, gives the linearized coordinate of the
     # appropriate bin
     linearized_bn_coords = np.apply_along_axis(
-        lambda row: linear_bn_map[tuple(row)], axis=1, arr=bn_coords
+        lambda row: linearized_bin_coords[tuple(row)], axis=1, arr=bn_coords
     )
 
     # put each non-uniform point into the appopriate bin
@@ -156,7 +152,7 @@ def compute_mapped_distance_matrix(
 
 
 def mapped_distance_matrix(
-    pts1, pts2, max_distance, func, h=None, bin_dims=None
+    pts1, pts2, max_distance, func, h=None, bin_dims=None, chunks="auto"
 ):
     region_dimension = np.max(pts2, axis=0) - np.min(pts2, axis=0)
 
