@@ -136,11 +136,13 @@ def compute_mapped_distance_matrix(
 
         distances = compute_distance(bin_pts1, padded_bin_pts2)
 
+        # indexes is the list of indexes in pts1 that belong to this bin
         indexes = np.asarray(indexes_inside_bins[bin_idx])
         # a new layer of selection, may want to disable to improve performance
         nearby = distances < max_distance  # (1)
 
         for pt1_idx in range(len(bin_pts1)):
+            # idx is the indexes in pts1 of the pt1_idx-th point in the bin
             idx = indexes[pt1_idx]
             full_pts2_indexes = bin_pts2_indexing_to_full[nearby[pt1_idx]]
             if len(full_pts2_indexes) > 0:
@@ -162,6 +164,8 @@ def mapped_distance_matrix(
 ):
     region_dimension = np.max(pts2, axis=0) - np.min(pts2, axis=0)
 
+    # not using np.vectorize if the function is already vectorized allows us
+    # to save some time
     if should_vectorize:
         func = np.vectorize(func)
 
