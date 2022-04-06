@@ -119,19 +119,18 @@ def compute_distance(pts1, pts2):
 def compute_mapped_distance_matrix(
     bins, indexes_inside_bins, pts1, pts2, inclusion_matrix, max_distance, func
 ):
-    func = np.vectorize(func)
-
-    def filter_empty_bins(bin_idx):
-        return len(bins[bin_idx]) > 0 and np.any(inclusion_matrix[:, bin_idx])
-
     # we filter away empty bins
-    bins_indexes = filter(filter_empty_bins, range(inclusion_matrix.shape[1]))
     matrix = np.zeros((len(pts1), len(pts2)), dtype=float)
 
-    for bin_idx in bins_indexes:
+    for bin_idx in range(inclusion_matrix.shape[1]):
         bin_pts1 = bins[bin_idx]
+        if len(bin_pts1) == 0:
+            continue
 
         pts2_in_bin = inclusion_matrix[:, bin_idx]
+        if len(pts2_in_bin) == 0:
+            continue
+
         padded_bin_pts2 = pts2[pts2_in_bin]
         # not needed if (1) is disabled
         bin_pts2_indexing_to_full = np.arange(len(pts2))[pts2_in_bin]
@@ -142,21 +141,30 @@ def compute_mapped_distance_matrix(
         # a new layer of selection, may want to disable to improve performance
         nearby = distances < max_distance  # (1)
 
-        def filter_zero_nearby(pt1_idx):
-            return np.any(nearby[pt1_idx])
-
-        for pt1_idx in filter(filter_zero_nearby, range(len(bin_pts1))):
+        for pt1_idx in range(len(bin_pts1)):
             idx = indexes[pt1_idx]
-            matrix[idx, bin_pts2_indexing_to_full[nearby[pt1_idx]]] = func(
-                distances[pt1_idx, nearby[pt1_idx]]
-            )
+            full_pts2_indexes = bin_pts2_indexing_to_full[nearby[pt1_idx]]
+            if len(full_pts2_indexes) > 0:
+                matrix[idx, full_pts2_indexes] = func(
+                    distances[pt1_idx, nearby[pt1_idx]]
+                )
     return matrix
 
 
 def mapped_distance_matrix(
-    pts1, pts2, max_distance, func, h=None, bin_dims=None, chunks="auto"
+    pts1,
+    pts2,
+    max_distance,
+    func,
+    h=None,
+    bin_dims=None,
+    chunks="auto",
+    should_vectorize=True,
 ):
     region_dimension = np.max(pts2, axis=0) - np.min(pts2, axis=0)
+
+    if should_vectorize:
+        func = np.vectorize(func)
 
     if not h:
         # 1000 points in each direction
