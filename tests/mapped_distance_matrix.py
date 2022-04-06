@@ -11,13 +11,13 @@ def rounded_uniform_coordinates(pts, h):
 # return a matrix such that each row corresponds to the coords of the bin
 # in which the corresponding point in rounded_uniform_coords should be
 # placed
-def bin_coords(rounded_uniform_coords, bin_dims):
+def compute_bin_coords(rounded_uniform_coords, bin_dims):
     return rounded_uniform_coords // bin_dims
 
 
 # top-left and bottom-right
-def bounds(bn):
-    return np.min(bn, axis=0)[None, :], np.max(bn, axis=0)[None, :]
+def bounds(bin_pts):
+    return np.min(bin_pts, axis=0)[None, :], np.max(bin_pts, axis=0)[None, :]
 
 
 # return a tensor of shape N x 2 x D where N is the number of bins, 2 is the
@@ -58,12 +58,12 @@ def fill_bins(pts, h, bin_dims, region_dimension):
     # rounded uniform coordinates for each non-uniform point
     uf_coords = rounded_uniform_coordinates(pts, h)
     # coordinates of the bin for a given non-uniform point
-    bn_coords = bin_coords(uf_coords, bin_dims)
+    bin_coords = compute_bin_coords(uf_coords, bin_dims)
 
     # moves to the last bin of the axis any point which is outside the region
     # defined by pts2.
-    for axis_idx in range(bn_coords.shape[1]):
-        bn_coords[bn_coords[:, axis_idx] >= bins_per_axis[axis_idx]] = (
+    for axis_idx in range(bin_coords.shape[1]):
+        bin_coords[bin_coords[:, axis_idx] >= bins_per_axis[axis_idx]] = (
             bins_per_axis[axis_idx] - 1
         )
 
@@ -71,11 +71,11 @@ def fill_bins(pts, h, bin_dims, region_dimension):
     # appropriate bin
     shifted_nbins_per_axis = np.ones_like(bins_per_axis)
     shifted_nbins_per_axis[:-1] = bins_per_axis[1:]
-    linearized_bin_coords = np.sum(bn_coords * shifted_nbins_per_axis, axis=1)
+    linearized_bin_coords = np.sum(bin_coords * shifted_nbins_per_axis, axis=1)
     # the above is much more efficient than this:
     # lbc = np.arange(nbins).reshape(bins_per_axis, order="C")
     # linearized_bin_coords = np.apply_along_axis(
-    #     lambda row: lbc[tuple(row)], axis=1, arr=bn_coords
+    #     lambda row: lbc[tuple(row)], axis=1, arr=bin_coords
     # )
 
     # put each non-uniform point into the appopriate bin
