@@ -38,6 +38,11 @@ def compute_bins_bounds(bins, ndims):
     return numpy_bins, bin_bounds
 
 
+def group_by(a):
+    a = a[a[:, 0].argsort()]
+    return np.split(a[:, 1], np.unique(a[:, 0], return_index=True)[1][1:])
+
+
 # build a list of lists, where each list contains the points in pts contained
 # inside the bin corresponding to a certain (linearized) coordinate. For more on
 # linearized bin coordinates see bin_coords and linearized_bin_coords.
@@ -52,7 +57,6 @@ def fill_bins(pts, h, bin_dims, region_dimension):
     bins_per_axis = np.ceil((region_dimension / h / bin_dims)).astype(int)
     nbins = np.prod(bins_per_axis)
 
-    bins = [[] for _ in range(nbins)]
     indexes_inside_bins = [[] for _ in range(nbins)]
     # rounded uniform coordinates for each non-uniform point
     uf_coords = rounded_uniform_coordinates(pts, h)
@@ -77,11 +81,15 @@ def fill_bins(pts, h, bin_dims, region_dimension):
     #     lambda row: lbc[tuple(row)], axis=1, arr=bin_coords
     # )
 
-    # put each non-uniform point into the appopriate bin
-    for j in range(len(pts)):
-        linear_bin_coord = linearized_bin_coords[j]
-        bins[linear_bin_coord].append(pts[j])
-        indexes_inside_bins[linear_bin_coord].append(j)
+    # add a second column containing the index in pts1
+    linearized_bin_coords = np.hstack(
+        [linearized_bin_coords[:, None], np.arange(len(pts))[:, None]]
+    )
+    indexes_inside_bins = group_by(linearized_bin_coords)
+
+    bins = []
+    for indexes_in_bin in indexes_inside_bins:
+        bins.append(pts[indexes_in_bin])
 
     return bins, indexes_inside_bins
 
