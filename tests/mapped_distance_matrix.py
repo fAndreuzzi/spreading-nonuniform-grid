@@ -22,9 +22,7 @@ def linearized_bin_coords(nbins):
 
 # top-left and bottom-right
 def bounds(bn):
-    return np.vstack(
-        [np.min(bn, axis=0)[None, :], np.max(bn, axis=0)[None, :]]
-    )
+    return np.min(bn, axis=0)[None, :], np.max(bn, axis=0)[None, :]
 
 
 # return a tensor of shape N x 2 x D where N is the number of bins, 2 is the
@@ -34,10 +32,15 @@ def compute_bins_bounds(bins, ndims):
     nbins = len(bins)
     bin_bounds = np.zeros((nbins, 2, ndims), dtype=float)
     for bin_idx in range(nbins):
+        # until now the bin is a Python list. we want it to be a NumPy array
         bin_as_arr = np.array(bins[bin_idx])
         bins[bin_idx] = bin_as_arr
+
+        # we don't do anything if the bin is empty
         if bin_as_arr.shape[0] > 0:
-            bin_bounds[bin_idx] = bounds(bin_as_arr)
+            top_left, bottom_right = bounds(bin_as_arr)
+            bin_bounds[bin_idx, 0] = top_left
+            bin_bounds[bin_idx, 1] = bottom_right
     return bin_bounds
 
 
@@ -182,7 +185,7 @@ def mapped_distance_matrix(
         pts2,
         inclusion_matrix,
         max_distance,
-        func
+        func,
     )
     assert mapped_distance.shape == (pts1.shape[0], pts2.shape[0])
 
