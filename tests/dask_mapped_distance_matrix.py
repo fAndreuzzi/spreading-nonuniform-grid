@@ -192,9 +192,11 @@ def mapped_distance_matrix(
     )
 
     matrix = np.zeros((len(pts1), len(pts2)), dtype=float)
-    for _, submatrix, pt1_idxes, pt2_idxes in as_completed(
+    for _, result in as_completed(
         sub_results, with_results=True
     ):
-        matrix[pt1_idxes, pt2_idxes] += submatrix
+        if result:
+                submatrix, pt1_idxes, pt2_idxes = result
+                matrix[np.ix_(pt1_idxes, pt2_idxes)] = submatrix
 
     return matrix
