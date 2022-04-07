@@ -53,7 +53,6 @@ def group_by(a):
 # region_dimension is the dimension of the region used to enclose the points.
 # it is preferable that bin_dims * h divides region_dimension exactly in each
 # direction.
-@profile
 def fill_bins(pts, h, bin_dims, region_dimension):
     bins_per_axis = np.ceil((region_dimension / h / bin_dims)).astype(int)
     nbins = np.prod(bins_per_axis)

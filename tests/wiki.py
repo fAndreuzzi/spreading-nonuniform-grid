@@ -12,7 +12,7 @@ if __name__ == '__main__':
     sigma = 1 / 12
     func = lambda x: np.exp(-x ** 2 / (2 * sigma ** 2))
 
-    m = mapped_distance_matrix(samples1, samples2, 0.1, func)
+    m = mapped_distance_matrix(samples1, samples2, 1, func)
 
     plt.contourf(x,y,m.dot(alpha).reshape(t.size, t.size), 50)
     plt.title('Sum of 4 (radial) Gaussians')
