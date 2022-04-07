@@ -65,10 +65,7 @@ def fill_bins(pts, h, bin_dims, region_dimension):
 
     # moves to the last bin of the axis any point which is outside the region
     # defined by pts2.
-    for axis_idx in range(bin_coords.shape[1]):
-        bin_coords[bin_coords[:, axis_idx] >= bins_per_axis[axis_idx]] = (
-            bins_per_axis[axis_idx] - 1
-        )
+    np.clip(bin_coords, None, bins_per_axis - 1)
 
     # for each non-uniform point, gives the linearized coordinate of the
     # appropriate bin
@@ -119,7 +116,14 @@ def compute_distance(pts1, pts2):
 
 
 def compute_mapped_distance_matrix(
-    bins, indexes_inside_bins, pts1, pts2, inclusion_matrix, max_distance, func
+    bins,
+    indexes_inside_bins,
+    pts1,
+    pts2,
+    inclusion_matrix,
+    max_distance,
+    func,
+    exact_max_distance=True,
 ):
     # we filter away empty bins
     matrix = np.zeros((len(pts1), len(pts2)), dtype=float)
