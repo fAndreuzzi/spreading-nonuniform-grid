@@ -53,6 +53,7 @@ def group_by(a):
 # region_dimension is the dimension of the region used to enclose the points.
 # it is preferable that bin_dims * h divides region_dimension exactly in each
 # direction.
+@profile
 def fill_bins(pts, h, bin_dims, region_dimension):
     bins_per_axis = np.ceil((region_dimension / h / bin_dims)).astype(int)
     nbins = np.prod(bins_per_axis)
@@ -134,28 +135,28 @@ def compute_mapped_distance_matrix(
             continue
 
         pts2_in_bin = inclusion_matrix[:, bin_idx]
-        if len(pts2_in_bin) == 0:
+        padded_bin_pts2 = pts2[pts2_in_bin]
+        if len(padded_bin_pts2) == 0:
             continue
 
-        padded_bin_pts2 = pts2[pts2_in_bin]
-        # not needed if (1) is disabled
         bin_pts2_indexing_to_full = np.arange(len(pts2))[pts2_in_bin]
 
         distances = compute_distance(bin_pts1, padded_bin_pts2)
 
         # indexes is the list of indexes in pts1 that belong to this bin
         indexes = np.asarray(indexes_inside_bins[bin_idx])
-        # a new layer of selection, may want to disable to improve performance
-        nearby = distances < max_distance  # (1)
 
-        for pt1_idx in range(len(bin_pts1)):
-            # idx is the indexes in pts1 of the pt1_idx-th point in the bin
-            idx = indexes[pt1_idx]
-            full_pts2_indexes = bin_pts2_indexing_to_full[nearby[pt1_idx]]
-            if len(full_pts2_indexes) > 0:
-                matrix[idx, full_pts2_indexes] = func(
-                    distances[pt1_idx, nearby[pt1_idx]]
-                )
+        if exact_max_distance:
+            nearby = distances < max_distance
+        else:
+            nearby = np.full(distances.shape, True)
+
+        mapped_distance = func(distances)
+        mapped_distance[np.logical_not(nearby)] = 0
+        matrix[
+            indexes[None, :], bin_pts2_indexing_to_full[:, None]
+        ] = np.squeeze(mapped_distance).T
+
     return matrix
 
 
